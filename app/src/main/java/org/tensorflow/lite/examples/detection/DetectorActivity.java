@@ -20,6 +20,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -30,7 +31,9 @@ import android.graphics.Typeface;
 import android.hardware.camera2.CameraCharacteristics;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
+import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -48,6 +51,7 @@ import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,11 +72,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private static final Logger LOGGER = new Logger();
 
 
-  // FaceNet
-//  private static final int TF_OD_API_INPUT_SIZE = 160;
-//  private static final boolean TF_OD_API_IS_QUANTIZED = false;
-//  private static final String TF_OD_API_MODEL_FILE = "facenet.tflite";
-//  //private static final String TF_OD_API_MODEL_FILE = "facenet_hiroki.tflite";
+
 
   // MobileFaceNet
   private static final int TF_OD_API_INPUT_SIZE = 112;
@@ -83,13 +83,12 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/labelmap.txt";
 
   private static final DetectorMode MODE = DetectorMode.TF_OD_API;
-  // Minimum detection confidence to track a detection.
+
   private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
   private static final boolean MAINTAIN_ASPECT = false;
 
   private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 480);
-  //private static final int CROP_SIZE = 320;
-  //private static final Size CROP_SIZE = new Size(320, 320);
+
 
 
   private static final boolean SAVE_PREVIEW_BITMAP = false;
@@ -135,6 +134,43 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+
+/*
+//    load dữ liệu từ database lên
+    String externalStoragePath = Environment.getExternalStorageDirectory()+ "/Pictures";
+    File externalStorageDirectory = new File(externalStoragePath);
+
+    File[] files = externalStorageDirectory.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (file.isFile()) {
+          String fileName = file.getName();
+          // Xử lý tên file ở đây
+          if(fileName.equals("tinh.jpg")){
+//          if(fileName.startsWith("AppChamCong_")){
+            String Directory = Environment.getExternalStorageDirectory() + "/Pictures";
+            String imagePath = Directory + "/" + fileName ;
+            File imageFile = new File(imagePath);
+            Log.d("tên đường dẫn file: ",imagePath);
+            // Kiểm tra xem tệp tin có tồn tại không
+            if (imageFile.exists()) {
+              Log.d("File Name",imageFile.getName());
+              // Tạo đối tượng Bitmap từ file ảnh
+              Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+              SimilarityClassifier.Recognition rec = null;
+              rec.setCrop(bitmap);
+              detector.Load_Database("tinh",rec);
+//              imageView.setImageBitmap(bitmap);
+
+            }
+          }
+          Log.d("File Name", fileName);
+        }
+      }
+    }
+
+*/
+
     fabAdd = findViewById(R.id.fab_add);
     fabAdd.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -156,17 +192,12 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     faceDetector = detector;
 
-
-    //checkWritePermission();
-
   }
 
 
 
   private void onAddClick() {
-
     addPending = true;
-    //Toast.makeText(this, "click", Toast.LENGTH_LONG ).show();
 
   }
 
@@ -395,6 +426,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     ivFace.setImageBitmap(rec.getCrop());
     etName.setHint("Input name");
 
+//    sau khi bấm nút + thì hiện cái dialog này lên nếu click = "ok" thì lưu ảnh
     builder.setPositiveButton("OK", new DialogInterface.OnClickListener(){
       @Override
       public void onClick(DialogInterface dlg, int i) {
@@ -404,6 +436,10 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
               return;
           }
           detector.register(name, rec);
+
+
+
+
           //knownFaces.put(name, rec);
           dlg.dismiss();
       }
@@ -588,9 +624,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     }
 
-    //    if (saved) {
-//      lastSaved = System.currentTimeMillis();
-//    }
+
 
     updateResults(currTimestamp, mappedRecognitions);
 

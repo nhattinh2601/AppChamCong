@@ -15,18 +15,29 @@ limitations under the License.
 
 package org.tensorflow.lite.examples.detection.tflite;
 
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
 import android.os.Trace;
 import android.util.Pair;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
@@ -94,8 +105,53 @@ public class TFLiteObjectDetectionAPIModel
   private float[][] output;
 
   private HashMap<String, Recognition> registered = new HashMap<>();
+
+
+  public void Load_Database(String name, Recognition rec) {
+    registered.put(name, rec);
+  }
+
+
   public void register(String name, Recognition rec) {
       registered.put(name, rec);
+
+    Bitmap bitmap = rec.getCrop();
+
+    //    BitmapDrawable bitmapDrawable=(BitmapDrawable) imageView.getDrawable();
+//    Bitmap bitmap=bitmapDrawable.getBitmap();
+
+    FileOutputStream fileOutputStream=null;
+
+//    File sdCard = Environment.getExternalStorageDirectory();
+//    File Directory=new File(sdCard.getAbsolutePath()+ "/Download");
+    String Directory = Environment.getExternalStorageDirectory() + "/Pictures";
+//    Directory.mkdir();
+
+    String filename="AppChamCong_"+name + ".jpg";
+    File outfile=new File(Directory,filename);
+
+//    Toast.makeText(MainActivity.this, "Image Saved Successfully", Toast.LENGTH_SHORT).show();
+
+    try {
+      fileOutputStream=new FileOutputStream(outfile);
+      bitmap.compress(Bitmap.CompressFormat.JPEG,100,fileOutputStream);
+      fileOutputStream.flush();
+      fileOutputStream.close();
+
+
+    }catch (FileNotFoundException e){
+      e.printStackTrace();
+    }catch (IOException e){
+      e.printStackTrace();
+    }
+
+
+
+//      luu trong nay
+//    funciton create csv from name
+//    funtion create folder with name folder = name
+//    put ảnh trong ảnh này
+
   }
 
   private TFLiteObjectDetectionAPIModel() {}
@@ -192,7 +248,7 @@ public class TFLiteObjectDetectionAPIModel
 
   }
 
-
+// hàm nhận diện khuôn mặt
   @Override
   public List<Recognition> recognizeImage(final Bitmap bitmap, boolean storeExtra) {
     // Log this method so that it can be analyzed with systrace.
@@ -223,9 +279,39 @@ public class TFLiteObjectDetectionAPIModel
 
     // Copy the input data into TensorFlow.
     Trace.beginSection("feed");
+/*
+//    BitmapDrawable bitmapDrawable=(BitmapDrawable) imageView.getDrawable();
+//    Bitmap bitmap=bitmapDrawable.getBitmap();
+
+    FileOutputStream fileOutputStream=null;
+
+//    File sdCard = Environment.getExternalStorageDirectory();
+//    File Directory=new File(sdCard.getAbsolutePath()+ "/Download");
+    String Directory = Environment.getExternalStorageDirectory() + "/Pictures";
+//    Directory.mkdir();
+
+    String filename=String.format("%d.jpg",System.currentTimeMillis());
+    File outfile=new File(Directory,filename);
+
+//    Toast.makeText(MainActivity.this, "Image Saved Successfully", Toast.LENGTH_SHORT).show();
+
+    try {
+      fileOutputStream=new FileOutputStream(outfile);
+      bitmap.compress(Bitmap.CompressFormat.JPEG,100,fileOutputStream);
+      fileOutputStream.flush();
+      fileOutputStream.close();
 
 
+    }catch (FileNotFoundException e){
+      e.printStackTrace();
+    }catch (IOException e){
+      e.printStackTrace();
+    }
+
+*/
     Object[] inputArray = {imgData};
+
+
 
     Trace.endSection();
 
@@ -264,7 +350,6 @@ public class TFLiteObjectDetectionAPIModel
             distance = nearest.second;
 
             LOGGER.i("nearest: " + name + " - distance: " + distance);
-
 
         }
     }

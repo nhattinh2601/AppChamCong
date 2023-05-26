@@ -59,7 +59,7 @@ import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
 
 public abstract class CameraActivity extends AppCompatActivity
-    implements OnImageAvailableListener,
+        implements OnImageAvailableListener,
         Camera.PreviewCallback,
         CompoundButton.OnCheckedChangeListener,
         View.OnClickListener {
@@ -139,50 +139,50 @@ public abstract class CameraActivity extends AppCompatActivity
 
     ViewTreeObserver vto = gestureLayout.getViewTreeObserver();
     vto.addOnGlobalLayoutListener(
-        new ViewTreeObserver.OnGlobalLayoutListener() {
-          @Override
-          public void onGlobalLayout() {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-              gestureLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-            } else {
-              gestureLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-            }
-            //                int width = bottomSheetLayout.getMeasuredWidth();
-            int height = gestureLayout.getMeasuredHeight();
+            new ViewTreeObserver.OnGlobalLayoutListener() {
+              @Override
+              public void onGlobalLayout() {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                  gestureLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                } else {
+                  gestureLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                }
+                //                int width = bottomSheetLayout.getMeasuredWidth();
+                int height = gestureLayout.getMeasuredHeight();
 
-            sheetBehavior.setPeekHeight(height);
-          }
-        });
+                sheetBehavior.setPeekHeight(height);
+              }
+            });
     sheetBehavior.setHideable(false);
 
     sheetBehavior.setBottomSheetCallback(
-        new BottomSheetBehavior.BottomSheetCallback() {
-          @Override
-          public void onStateChanged(@NonNull View bottomSheet, int newState) {
-            switch (newState) {
-              case BottomSheetBehavior.STATE_HIDDEN:
-                break;
-              case BottomSheetBehavior.STATE_EXPANDED:
-                {
-                  bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_down);
+            new BottomSheetBehavior.BottomSheetCallback() {
+              @Override
+              public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                switch (newState) {
+                  case BottomSheetBehavior.STATE_HIDDEN:
+                    break;
+                  case BottomSheetBehavior.STATE_EXPANDED:
+                  {
+                    bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_down);
+                  }
+                  break;
+                  case BottomSheetBehavior.STATE_COLLAPSED:
+                  {
+                    bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_up);
+                  }
+                  break;
+                  case BottomSheetBehavior.STATE_DRAGGING:
+                    break;
+                  case BottomSheetBehavior.STATE_SETTLING:
+                    bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_up);
+                    break;
                 }
-                break;
-              case BottomSheetBehavior.STATE_COLLAPSED:
-                {
-                  bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_up);
-                }
-                break;
-              case BottomSheetBehavior.STATE_DRAGGING:
-                break;
-              case BottomSheetBehavior.STATE_SETTLING:
-                bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_up);
-                break;
-            }
-          }
+              }
 
-          @Override
-          public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
-        });
+              @Override
+              public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
+            });
 
     frameValueTextView = findViewById(R.id.frame_info);
     cropValueTextView = findViewById(R.id.crop_info);
@@ -203,9 +203,7 @@ public abstract class CameraActivity extends AppCompatActivity
   }
 
   private void onSwitchCamClick() {
-
     switchCamera();
-
   }
 
   public void switchCamera() {
@@ -261,12 +259,12 @@ public abstract class CameraActivity extends AppCompatActivity
         previewWidth = previewSize.width;
         //rgbBytes = new int[previewWidth * previewHeight];
         //onPreviewSizeChosen(new Size(previewSize.width, previewSize.height), 90);
-          rgbBytes = new int[previewWidth * previewHeight];
-          int rotation = 90;
-          if (useFacing == CameraCharacteristics.LENS_FACING_FRONT) {
-              rotation = 270;
-          }
-          onPreviewSizeChosen(new Size(previewSize.width, previewSize.height), rotation);
+        rgbBytes = new int[previewWidth * previewHeight];
+        int rotation = 90;
+        if (useFacing == CameraCharacteristics.LENS_FACING_FRONT) {
+          rotation = 270;
+        }
+        onPreviewSizeChosen(new Size(previewSize.width, previewSize.height), rotation);
       }
     } catch (final Exception e) {
       LOGGER.e(e, "Exception!");
@@ -278,21 +276,21 @@ public abstract class CameraActivity extends AppCompatActivity
     yRowStride = previewWidth;
 
     imageConverter =
-        new Runnable() {
-          @Override
-          public void run() {
-            ImageUtils.convertYUV420SPToARGB8888(bytes, previewWidth, previewHeight, rgbBytes);
-          }
-        };
+            new Runnable() {
+              @Override
+              public void run() {
+                ImageUtils.convertYUV420SPToARGB8888(bytes, previewWidth, previewHeight, rgbBytes);
+              }
+            };
 
     postInferenceCallback =
-        new Runnable() {
-          @Override
-          public void run() {
-            camera.addCallbackBuffer(bytes);
-            isProcessingFrame = false;
-          }
-        };
+            new Runnable() {
+              @Override
+              public void run() {
+                camera.addCallbackBuffer(bytes);
+                isProcessingFrame = false;
+              }
+            };
     processImage();
   }
 
@@ -326,30 +324,30 @@ public abstract class CameraActivity extends AppCompatActivity
       final int uvPixelStride = planes[1].getPixelStride();
 
       imageConverter =
-          new Runnable() {
-            @Override
-            public void run() {
-              ImageUtils.convertYUV420ToARGB8888(
-                  yuvBytes[0],
-                  yuvBytes[1],
-                  yuvBytes[2],
-                  previewWidth,
-                  previewHeight,
-                  yRowStride,
-                  uvRowStride,
-                  uvPixelStride,
-                  rgbBytes);
-            }
-          };
+              new Runnable() {
+                @Override
+                public void run() {
+                  ImageUtils.convertYUV420ToARGB8888(
+                          yuvBytes[0],
+                          yuvBytes[1],
+                          yuvBytes[2],
+                          previewWidth,
+                          previewHeight,
+                          yRowStride,
+                          uvRowStride,
+                          uvPixelStride,
+                          rgbBytes);
+                }
+              };
 
       postInferenceCallback =
-          new Runnable() {
-            @Override
-            public void run() {
-              image.close();
-              isProcessingFrame = false;
-            }
-          };
+              new Runnable() {
+                @Override
+                public void run() {
+                  image.close();
+                  isProcessingFrame = false;
+                }
+              };
 
       processImage();
     } catch (final Exception e) {
@@ -412,7 +410,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
   @Override
   public void onRequestPermissionsResult(
-      final int requestCode, final String[] permissions, final int[] grantResults) {
+          final int requestCode, final String[] permissions, final int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     if (requestCode == PERMISSIONS_REQUEST) {
       if (allPermissionsGranted(grantResults)) {
@@ -444,10 +442,10 @@ public abstract class CameraActivity extends AppCompatActivity
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       if (shouldShowRequestPermissionRationale(PERMISSION_CAMERA)) {
         Toast.makeText(
-                CameraActivity.this,
-                "Camera permission is required for this demo",
-                Toast.LENGTH_LONG)
-            .show();
+                        CameraActivity.this,
+                        "Camera permission is required for this demo",
+                        Toast.LENGTH_LONG)
+                .show();
       }
       requestPermissions(new String[] {PERMISSION_CAMERA}, PERMISSIONS_REQUEST);
     }
@@ -455,7 +453,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
   // Returns true if the device supports the required hardware level, or better.
   private boolean isHardwareLevelSupported(
-      CameraCharacteristics characteristics, int requiredLevel) {
+          CameraCharacteristics characteristics, int requiredLevel) {
     int deviceLevel = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
     if (deviceLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
       return requiredLevel == deviceLevel;
@@ -464,96 +462,96 @@ public abstract class CameraActivity extends AppCompatActivity
     return requiredLevel <= deviceLevel;
   }
 
-   private String chooseCamera() {
+  private String chooseCamera() {
 
-        final CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+    final CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
-        try {
-
-
-            for (final String cameraId : manager.getCameraIdList()) {
-                final CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+    try {
 
 
-                final StreamConfigurationMap map =
-                        characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+      for (final String cameraId : manager.getCameraIdList()) {
+        final CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
 
-                if (map == null) {
-                    continue;
-                }
 
-                // Fallback to camera1 API for internal cameras that don't have full support.
-                // This should help with legacy situations where using the camera2 API causes
-                // distorted or otherwise broken previews.
-                //final int facing =
-                //(facing == CameraCharacteristics.LENS_FACING_EXTERNAL)
+        final StreamConfigurationMap map =
+                characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+
+        if (map == null) {
+          continue;
+        }
+
+        // Fallback to camera1 API for internal cameras that don't have full support.
+        // This should help with legacy situations where using the camera2 API causes
+        // distorted or otherwise broken previews.
+        //final int facing =
+        //(facing == CameraCharacteristics.LENS_FACING_EXTERNAL)
 //        if (!facing.equals(useFacing)) {
 //          continue;
 //        }
 
-                final Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+        final Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
 
-                if (useFacing != null &&
-                        facing != null &&
-                        !facing.equals(useFacing)
-                ) {
-                    continue;
-                }
-
-
-                useCamera2API = (facing == CameraCharacteristics.LENS_FACING_EXTERNAL)
-                                || isHardwareLevelSupported(
-                                characteristics, CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL);
-
-
-                LOGGER.i("Camera API lv2?: %s", useCamera2API);
-                return cameraId;
-            }
-        } catch (CameraAccessException e) {
-            LOGGER.e(e, "Not allowed to access camera");
+        if (useFacing != null &&
+                facing != null &&
+                !facing.equals(useFacing)
+        ) {
+          continue;
         }
 
-        return null;
+
+        useCamera2API = (facing == CameraCharacteristics.LENS_FACING_EXTERNAL)
+                || isHardwareLevelSupported(
+                characteristics, CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL);
+
+
+        LOGGER.i("Camera API lv2?: %s", useCamera2API);
+        return cameraId;
+      }
+    } catch (CameraAccessException e) {
+      LOGGER.e(e, "Not allowed to access camera");
     }
 
+    return null;
+  }
 
- protected void setFragment() {
 
-        this.cameraId = chooseCamera();
+  protected void setFragment() {
 
-        Fragment fragment;
-        if (useCamera2API) {
-            CameraConnectionFragment camera2Fragment =
-                    CameraConnectionFragment.newInstance(
-                            new CameraConnectionFragment.ConnectionCallback() {
-                                @Override
-                                public void onPreviewSizeChosen(final Size size, final int rotation) {
-                                    previewHeight = size.getHeight();
-                                    previewWidth = size.getWidth();
-                                    CameraActivity.this.onPreviewSizeChosen(size, rotation);
-                                }
-                            },
-                            this,
-                            getLayoutId(),
-                            getDesiredPreviewFrameSize());
+    this.cameraId = chooseCamera();
 
-            camera2Fragment.setCamera(cameraId);
-            fragment = camera2Fragment;
+    Fragment fragment;
+    if (useCamera2API) {
+      CameraConnectionFragment camera2Fragment =
+              CameraConnectionFragment.newInstance(
+                      new CameraConnectionFragment.ConnectionCallback() {
+                        @Override
+                        public void onPreviewSizeChosen(final Size size, final int rotation) {
+                          previewHeight = size.getHeight();
+                          previewWidth = size.getWidth();
+                          CameraActivity.this.onPreviewSizeChosen(size, rotation);
+                        }
+                      },
+                      this,
+                      getLayoutId(),
+                      getDesiredPreviewFrameSize());
 
-        } else {
+      camera2Fragment.setCamera(cameraId);
+      fragment = camera2Fragment;
 
-          int facing = (useFacing == CameraCharacteristics.LENS_FACING_BACK) ?
-                          Camera.CameraInfo.CAMERA_FACING_BACK :
-                          Camera.CameraInfo.CAMERA_FACING_FRONT;
-            LegacyCameraConnectionFragment frag = new LegacyCameraConnectionFragment(this,
-                    getLayoutId(),
-                    getDesiredPreviewFrameSize(), facing);
-            fragment = frag;
+    } else {
 
-        }
+      int facing = (useFacing == CameraCharacteristics.LENS_FACING_BACK) ?
+              Camera.CameraInfo.CAMERA_FACING_BACK :
+              Camera.CameraInfo.CAMERA_FACING_FRONT;
+      LegacyCameraConnectionFragment frag = new LegacyCameraConnectionFragment(this,
+              getLayoutId(),
+              getDesiredPreviewFrameSize(), facing);
+      fragment = frag;
 
-        getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
     }
+
+    getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
+  }
 
   protected void fillBytes(final Plane[] planes, final byte[][] yuvBytes) {
     // Because of the variable row stride it's not possible to know in

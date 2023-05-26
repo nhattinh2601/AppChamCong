@@ -24,6 +24,8 @@ public interface SimilarityClassifier {
 
   void register(String name, Recognition recognition);
 
+  public void Load_Database(String name, Recognition rec);
+
   List<Recognition> recognizeImage(Bitmap bitmap, boolean getExtra);
 
   void enableStatLogging(final boolean debug);
@@ -67,6 +69,8 @@ public interface SimilarityClassifier {
       this.color = null;
       this.extra = null;
       this.crop = null;
+
+
     }
 
     public void setExtra(Object extra) {
