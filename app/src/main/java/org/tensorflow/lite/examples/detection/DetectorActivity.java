@@ -17,10 +17,10 @@
 package org.tensorflow.lite.examples.detection;
 
 import android.app.AlertDialog;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -30,21 +30,38 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.hardware.camera2.CameraCharacteristics;
 import android.media.ImageReader.OnImageAvailableListener;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.StorageTask;
+import com.google.firebase.storage.UploadTask;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceDetection;
@@ -52,17 +69,30 @@ import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
 import org.tensorflow.lite.examples.detection.customview.OverlayView;
 import org.tensorflow.lite.examples.detection.customview.OverlayView.DrawCallback;
 import org.tensorflow.lite.examples.detection.env.BorderedText;
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
+import org.tensorflow.lite.examples.detection.model.Upload;
+import org.tensorflow.lite.examples.detection.model.XuLiModel;
+import org.tensorflow.lite.examples.detection.retrofit.ApiBanHang;
+import org.tensorflow.lite.examples.detection.retrofit.RetrofitClient;
 import org.tensorflow.lite.examples.detection.tflite.SimilarityClassifier;
 import org.tensorflow.lite.examples.detection.tflite.TFLiteObjectDetectionAPIModel;
 import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
+import org.tensorflow.lite.examples.detection.utils.Utils;
+
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * An activity that uses a TensorFlowMultiBoxDetector and ObjectTracker to detect and then track
@@ -125,51 +155,71 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   // here the face is cropped and drawn
   private Bitmap faceBmp = null;
 
-  private FloatingActionButton fabAdd;
+  private FloatingActionButton fabAdd,fabCheckIn,fabCheckOut;
+  String namel;
+  FirebaseAuth firebaseAuth;
+  CompositeDisposable compositeDisposable = new CompositeDisposable();
+  ApiBanHang apiBanHang;
+
+  XuLiModel xuLiModel;
 
   //private HashMap<String, Classifier.Recognition> knownFaces = new HashMap<>();
 
+  int flag=0;
+  String name_check;
+
+  public String getName_check() {
+    return name_check;
+  }
+
+  public void setName_check(String name_check) {
+    this.name_check = name_check;
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+    apiBanHang = RetrofitClient.getInstance(Utils.BASE_URL).create(ApiBanHang.class);
+    initView();
 
-/*
-//    load dữ liệu từ database lên
-    String externalStoragePath = Environment.getExternalStorageDirectory()+ "/Pictures";
-    File externalStorageDirectory = new File(externalStoragePath);
+    fabCheckIn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if(flag ==1){
+          Calendar currentTime = Calendar.getInstance();
+          SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm:ss dd/MM/yyyy");
+          String s = dateFormat.format(currentTime.getTime());
+          XuLiModel.setFormattedTimeCheckOutIn(s);
 
-    File[] files = externalStorageDirectory.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        if (file.isFile()) {
-          String fileName = file.getName();
-          // Xử lý tên file ở đây
-          if(fileName.equals("tinh.jpg")){
-//          if(fileName.startsWith("AppChamCong_")){
-            String Directory = Environment.getExternalStorageDirectory() + "/Pictures";
-            String imagePath = Directory + "/" + fileName ;
-            File imageFile = new File(imagePath);
-            Log.d("tên đường dẫn file: ",imagePath);
-            // Kiểm tra xem tệp tin có tồn tại không
-            if (imageFile.exists()) {
-              Log.d("File Name",imageFile.getName());
-              // Tạo đối tượng Bitmap từ file ảnh
-              Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
-              SimilarityClassifier.Recognition rec = null;
-              rec.setCrop(bitmap);
-              detector.Load_Database("tinh",rec);
-//              imageView.setImageBitmap(bitmap);
-
-            }
-          }
-          Log.d("File Name", fileName);
+          insertDataIn(XuLiModel.getFormattedTimeCheckOutIn());
+          flag =0;
+          setName_check("");
         }
-      }
-    }
+        else if (flag ==0){
+          Toast.makeText(DetectorActivity.this, "ko co khuon mat checkin", Toast.LENGTH_SHORT).show();
+        }
+        
 
-*/
+      }
+    });
+    fabCheckOut.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+       if(flag == 1){
+         Calendar currentTime = Calendar.getInstance();
+         SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm:ss dd/MM/yyyy");
+         String s = dateFormat.format(currentTime.getTime());
+         XuLiModel.setFormattedTimeCheckInOut(s);
+         insertDataOut(XuLiModel.getFormattedTimeCheckInOut());
+         flag = 0;
+         setName_check("");
+       }else if(flag ==0){
+         Toast.makeText(DetectorActivity.this, "Check out ko thanh cong", Toast.LENGTH_SHORT).show();
+       }
+//        Log.d("setFormattedTimeCheckInOut", Utils.user_current.getEmail());getEmail
+      }
+    });
 
     fabAdd = findViewById(R.id.fab_add);
     fabAdd.setOnClickListener(new View.OnClickListener() {
@@ -192,8 +242,55 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     faceDetector = detector;
 
+    mStorageRef = FirebaseStorage.getInstance().getReference("uploads");
+    mDatabaseRef = FirebaseDatabase.getInstance().getReference();
+
   }
 
+  private void initView() {
+    fabCheckIn = findViewById(R.id.check_in);
+    fabCheckOut = findViewById(R.id.check_out);
+
+  }
+  private void insertDataIn(String time){
+
+    Map<String,Object> map = new HashMap<>();
+    map.put("email",getName_check());
+    map.put("time",time);
+    FirebaseDatabase.getInstance().getReference().child("CheckIn").push()
+            .setValue(map)
+            .addOnSuccessListener(new OnSuccessListener<Void>() {
+              @Override
+              public void onSuccess(Void unused) {
+                Toast.makeText(DetectorActivity.this, "CheckIn Successfull", Toast.LENGTH_SHORT).show();
+              }
+            })
+            .addOnFailureListener(new OnFailureListener() {
+              @Override
+              public void onFailure(@NonNull Exception e) {
+                Toast.makeText(DetectorActivity.this, "Error", Toast.LENGTH_SHORT).show();
+              }
+            });
+
+  }
+  private void insertDataOut(String time){
+    Map<String,Object> map = new HashMap<>();
+    map.put("email",getName_check());
+    map.put("time",time);
+    FirebaseDatabase.getInstance().getReference().child("CheckOut").push()
+            .setValue(map)
+            .addOnSuccessListener(new OnSuccessListener<Void>() {
+              @Override
+              public void onSuccess(Void unused) {
+                Toast.makeText(DetectorActivity.this, "CheckOut Successfull", Toast.LENGTH_SHORT).show();
+              }
+            }).addOnFailureListener(new OnFailureListener() {
+              @Override
+              public void onFailure(@NonNull Exception e) {
+                Toast.makeText(DetectorActivity.this, "Error", Toast.LENGTH_SHORT).show();
+              }
+            });
+  }
 
 
   private void onAddClick() {
@@ -310,6 +407,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
       return;
     }
     computingDetection = true;
+
 
     LOGGER.i("Preparing image " + currTimestamp + " for detection in bg thread.");
 
@@ -431,22 +529,138 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
       @Override
       public void onClick(DialogInterface dlg, int i) {
 
-          String name = etName.getText().toString();
-          if (name.isEmpty()) {
-              return;
+        String namel = etName.getText().toString();
+          if (namel.isEmpty()) {
+            Toast.makeText(getApplicationContext(), "Bạn chưa nhập email", Toast.LENGTH_SHORT).show();
+            return;
+          }else{
+            firebaseAuth = FirebaseAuth.getInstance();
+            String pass="123456";
+            firebaseAuth.createUserWithEmailAndPassword(namel, pass)
+                    .addOnCompleteListener(DetectorActivity.this, new OnCompleteListener<AuthResult>() {
+                      @Override
+                      public void onComplete(@NonNull Task<AuthResult> task) {
+                        if(task.isSuccessful()){
+                          FirebaseUser user = firebaseAuth.getCurrentUser();
+                          if(user != null ){
+                            detector.register(namel, rec);
+                            uploadFile(namel);
+                          }
+                        }else {
+                          flag =1;
+                          Toast.makeText(getApplicationContext(), "Email đã tồn tại hoặc không thành công", Toast.LENGTH_LONG).show();
+                          return;
+                        }
+                      }
+                    });
           }
-          detector.register(name, rec);
+
+
+
+
+
+
+        Bitmap bitmap = rec.getCrop();
+        // Tạo tên tệp tin ngẫu nhiên
+        String fileName = "image_" + System.currentTimeMillis() + "." + getBitmapFileExtension(bitmap);
+
+// Tạo một File mới
+        File file = new File(getCacheDir(), fileName);
+
+        try {
+          FileOutputStream fos = new FileOutputStream(file);
+          bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+          fos.flush();
+          fos.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+
+        Uri uri = FileProvider.getUriForFile(DetectorActivity.this, "org.tensorflow.lite.examples.fileprovider", file);
+
+        mImageUri = uri;
 
 
 
 
           //knownFaces.put(name, rec);
           dlg.dismiss();
+
+
+
+
       }
     });
     builder.setView(dialogLayout);
     builder.show();
 
+  }
+
+
+
+
+  private String getBitmapFileExtension(Bitmap bitmap) {
+    Bitmap.CompressFormat format = bitmap.hasAlpha() ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG;
+    return format == Bitmap.CompressFormat.PNG ? "png" : "jpg";
+  }
+
+  private Uri mImageUri;
+
+  private StorageReference mStorageRef;
+  private DatabaseReference mDatabaseRef;
+
+  private StorageTask mUploadTask;
+
+  private String getFileExtension(Uri uri) {
+    ContentResolver cR = getContentResolver();
+    MimeTypeMap mime = MimeTypeMap.getSingleton();
+    return mime.getExtensionFromMimeType(cR.getType(uri));
+  }
+
+  private void uploadFile(String name) {
+    if (mImageUri != null) {
+      StorageReference fileReference = mStorageRef.child(System.currentTimeMillis()
+              + "." + getFileExtension(mImageUri));
+
+      mUploadTask = fileReference.putFile(mImageUri)
+              .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                  fileReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                      // uri contains the download URL for the uploaded image
+                      Log.d("TAG", "Download URL: " + uri.toString());
+
+                      Toast.makeText(DetectorActivity.this, "Success! Image uploaded and URL retrieved", Toast.LENGTH_SHORT).show();
+
+                      //tao node tren phan database
+                      Upload upload = new Upload(name,uri.toString());
+                      mDatabaseRef.child("uploads").push().setValue(upload, new DatabaseReference.CompletionListener() {
+                        @Override
+                        public void onComplete(DatabaseError error,DatabaseReference ref) {
+                          if(error == null){
+                            Toast.makeText(DetectorActivity.this, "Luu du lieu thanh cong", Toast.LENGTH_SHORT).show();
+                          }else
+                          {
+                            Toast.makeText(DetectorActivity.this, "Loi luu du lieu", Toast.LENGTH_SHORT).show();
+                          }
+                        }
+                      });
+                    }
+                  });
+                }
+              })
+              .addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                  Toast.makeText(DetectorActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+              });
+    } else {
+      Toast.makeText(this, "No file selected", Toast.LENGTH_SHORT).show();
+    }
   }
 
   private void updateResults(long currTimestamp, final List<SimilarityClassifier.Recognition> mappedRecognitions) {
@@ -574,10 +788,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
           SimilarityClassifier.Recognition result = resultsAux.get(0);
 
           extra = result.getExtra();
-//          Object extra = result.getExtra();
-//          if (extra != null) {
-//            LOGGER.i("embeeding retrieved " + extra.toString());
-//          }
+
 
           float conf = result.getDistance();
           if (conf < 1.0f) {
@@ -586,6 +797,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
             label = result.getTitle();
             if (result.getId().equals("0")) {
               color = Color.GREEN;
+              setName_check(label);
+              flag =1;
+
             }
             else {
               color = Color.RED;

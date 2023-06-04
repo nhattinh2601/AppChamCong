@@ -1,15 +1,17 @@
-apply plugin: 'com.android.application'
-apply plugin: 'de.undercouch.download'
-
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+}
 android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdk 33
     defaultConfig {
         applicationId "org.tensorflow.lite.examples.facerecognition"
-        minSdkVersion 21
-        targetSdkVersion 28
+        minSdk 24
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -21,12 +23,13 @@ android {
         noCompress "tflite"
     }
     compileOptions {
-        sourceCompatibility = '1.8'
-        targetCompatibility = '1.8'
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     lintOptions {
         abortOnError false
     }
+    buildToolsVersion '28.0.3'
 }
 
 // import DownloadModels task
@@ -41,15 +44,70 @@ project.ext.TMP_DIR   = project.buildDir.toString() + '/downloads'
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar','*.aar'])
-    implementation 'androidx.appcompat:appcompat:1.0.0'
-    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.0.0'
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
+    implementation 'com.google.android.material:material:1.9.0'
     implementation('org.tensorflow:tensorflow-lite:0.0.0-nightly') { changing = true }
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    implementation 'androidx.annotation:annotation:1.6.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.6.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1'
+    implementation 'com.google.firebase:firebase-database-ktx:20.2.2'
+    implementation 'com.google.firebase:firebase-storage:20.2.0'
+    implementation 'com.google.firebase:firebase-database:20.0.4'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
     androidTestImplementation 'com.google.truth:truth:1.0.1'
 
     // added MLKit dependencies for face detector
-    implementation 'com.google.mlkit:face-detection:16.0.0'
+    implementation 'com.google.mlkit:face-detection:16.1.5'
 
+    //RxJava
+
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
+    implementation 'io.reactivex.rxjava3:rxjava:3.0.0'
+
+    //firebase
+
+    implementation 'com.google.firebase:firebase-auth:22.0.0'
+    implementation 'com.google.firebase:firebase-auth-ktx:22.0.0'
+    implementation 'com.google.firebase:firebase-messaging:23.1.2'
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+    implementation "androidx.cardview:cardview:1.0.0"
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'com.firebaseui:firebase-ui-database:8.0.2'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.4'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
+
+    //paper
+    implementation'io.github.pilgr:paperdb:2.7.1'
+
+    // Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation "com.github.akarnokd:rxjava3-retrofit-adapter:3.0.0"
+
+
+
+    constraints {
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {
+            because("kotlin-stdlib-jdk7 is now a part of kotlin-stdlib")
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0") {
+            because("kotlin-stdlib-jdk8 is now a part of kotlin-stdlib")
+        }
+    }
+
+
+    //glider
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
+
+
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    implementation 'com.squareup.picasso:picasso:2.71828'
 }
+apply plugin: 'com.android.application'
+apply plugin: 'de.undercouch.download'
+apply plugin: 'com.google.gms.google-services'
